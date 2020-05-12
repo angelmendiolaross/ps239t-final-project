@@ -14,7 +14,7 @@ I rely on a range of packages for cleaning, visualizing, and analyzing my data. 
 
 #### /
 
-1. Narrative.Rmd: Provides a 5 page narrative of the project, main challenges, solutions, and results.
+1. Narrative.Rmd: Provides a 4 page narrative of the project, main challenges, solutions, and results.
 2. Narrative.pdf: A knitted pdf of Narrative.Rmd. 
 3. slides.pdf: Slides from class presentation on 5/6/2020.
 
