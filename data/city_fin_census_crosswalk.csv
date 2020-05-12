@@ -1,0 +1,483 @@
+entity_id,entity_name,GEOID
+1128,Adelanto,600296
+1129,Agoura Hills,600394
+1130,Alameda,600562
+1131,Albany,600674
+1132,Alhambra,600884
+8635,Aliso Viejo,600947
+1133,Alturas,601444
+1134,Amador,601514
+1135,American Canyon,601640
+1136,Anaheim,602000
+1137,Anderson,602042
+1138,Angels Camp,602112
+1139,Antioch,602252
+1140,Apple Valley,602364
+1141,Arcadia,602462
+1142,Arcata,602476
+1143,Arroyo Grande,602868
+1144,Artesia,602896
+1145,Arvin,602924
+1146,Atascadero,603064
+1147,Atherton,603092
+1148,Atwater,603162
+1149,Auburn,603204
+1150,Avalon,603274
+1151,Avenal,603302
+1152,Azusa,603386
+1153,Bakersfield,603526
+1154,Baldwin Park,603666
+1155,Banning,603820
+1156,Barstow,604030
+1157,Beaumont,604758
+1158,Bell,604870
+1160,Bellflower,604982
+1159,Bell Gardens,604996
+1161,Belmont,605108
+1162,Belvedere,605164
+1163,Benicia,605290
+1164,Berkeley,606000
+1165,Beverly Hills,606308
+1166,Big Bear Lake,606434
+1167,Biggs,606560
+1168,Bishop,606798
+1169,Blue Lake,607162
+1170,Blythe,607218
+1171,Bradbury,607946
+1172,Brawley,608058
+1173,Brea,608100
+1174,Brentwood,608142
+1175,Brisbane,608310
+1176,Buellton,608758
+1177,Buena Park,608786
+1178,Burbank,608954
+1179,Burlingame,609066
+1180,Calabasas,609598
+1181,Calexico,609710
+1182,California City,609780
+1183,Calimesa,609864
+1184,Calipatria,609878
+1185,Calistoga,609892
+1186,Camarillo,610046
+1187,Campbell,610345
+1188,Canyon Lake,610928
+1189,Capitola,611040
+1190,Carlsbad,611194
+1191,Carmel-By-The-Sea,611250
+1192,Carpinteria,611446
+1193,Carson,611530
+1194,Cathedral City,612048
+1195,Ceres,612524
+1196,Cerritos,612552
+1197,Chico,613014
+1198,Chino,613210
+1199,Chino Hills,613214
+1200,Chowchilla,613294
+1201,Chula Vista,613392
+1202,Citrus Heights,613588
+1203,Claremont,613756
+1204,Clayton,613882
+1205,Clearlake,613945
+1206,Cloverdale,614190
+1207,Clovis,614218
+1208,Coachella,614260
+1209,Coalinga,614274
+1210,Colfax,614498
+1211,Colma,614736
+1212,Colton,614890
+1213,Colusa,614946
+1214,Commerce,614974
+1215,Compton,615044
+1216,Concord,616000
+1217,Corcoran,616224
+1218,Corning,616322
+1219,Corona,616350
+1220,Coronado,616378
+1221,Corte Madera,616462
+1222,Costa Mesa,616532
+1223,Cotati,616560
+1224,Covina,616742
+1225,Crescent City,617022
+1226,Cudahy,617498
+1227,Culver City,617568
+1228,Cupertino,617610
+1229,Cypress,617750
+1230,Daly City,617918
+1231,Dana Point,617946
+1232,Danville,617988
+1233,Davis,618100
+1236,Delano,618394
+1234,Del Mar,618506
+1235,Del Rey Oaks,618688
+1237,Desert Hot Springs,618996
+1238,Diamond Bar,619192
+1239,Dinuba,619318
+1240,Dixon,619402
+1241,Dorris,619584
+1242,Dos Palos,619612
+1243,Downey,619766
+1244,Duarte,619990
+1245,Dublin,620018
+1246,Dunsmuir,620242
+1247,East Palo Alto,620956
+10783,Eastvale,621230
+1248,El Cajon,621712
+1249,El Centro,621782
+1250,El Cerrito,621796
+1254,Elk Grove,622020
+1251,El Monte,622230
+1252,El Paso De Robles,622300
+1253,El Segundo,622412
+1255,Emeryville,622594
+1256,Encinitas,622678
+1257,Escalon,622790
+1258,Escondido,622804
+1259,Etna,622972
+1260,Eureka,623042
+1261,Exeter,623126
+1262,Fairfax,623168
+1263,Fairfield,623182
+1264,Farmersville,623616
+1265,Ferndale,623910
+1266,Fillmore,624092
+1267,Firebaugh,624134
+1268,Folsom,624638
+1269,Fontana,624680
+1270,Fort Bragg,625058
+1271,Fort Jones,625128
+1272,Fortuna,625296
+1273,Foster City,625338
+1274,Fountain Valley,625380
+1275,Fowler,625436
+1276,Fremont,626000
+1277,Fresno,627000
+1278,Fullerton,628000
+1279,Galt,628112
+1281,Gardena,628168
+1280,Garden Grove,629000
+1282,Gilroy,629504
+1283,Glendale,630000
+1284,Glendora,630014
+8636,Goleta,630378
+1285,Gonzales,630392
+1286,Grand Terrace,630658
+1287,Grass Valley,630798
+1288,Greenfield,630994
+1289,Gridley,631260
+1290,Grover Beach,631393
+1291,Guadalupe,631414
+1292,Gustine City,631568
+1293,Half Moon Bay,631708
+1294,Hanford,631960
+1295,Hawaiian Gardens,632506
+1296,Hawthorne,632548
+1297,Hayward,633000
+1298,Healdsburg,633056
+1299,Hemet,633182
+1300,Hercules,633308
+1301,Hermosa Beach,633364
+1302,Hesperia,633434
+1303,Hidden Hills,633518
+1304,Highland,633588
+1305,Hillsborough,633798
+1306,Hollister,634120
+1307,Holtville,634246
+1308,Hughson,634904
+1309,Huntington Beach,636000
+1310,Huntington Park,636056
+1311,Huron,636084
+1312,Imperial,636280
+1313,Imperial Beach,636294
+1314,Indian Wells,636434
+1315,Indio,636448
+1316,Industry,636490
+1317,Inglewood,636546
+1318,Ione,636672
+1319,Irvine,636770
+1320,Irwindale,636826
+1321,Isleton,636882
+1322,Jackson,636980
+11163,Jurupa Valley,637692
+1323,Kerman,638226
+1324,King City,638520
+1325,Kingsburg,638562
+1326,La Canada Flintridge,639003
+1335,Lafayette,639122
+1336,Laguna Beach,639178
+1337,Laguna Hills,639220
+1338,Laguna Niguel,639248
+1339,Laguna Woods,639259
+1327,La Habra,639290
+1328,La Habra Heights,639304
+1340,Lake Elsinore,639486
+1341,Lake Forest,639496
+1342,Lakeport,639710
+1343,Lakewood,639892
+1329,La Mesa,640004
+1330,La Mirada,640032
+1344,Lancaster,640130
+1331,La Palma,640256
+1332,La Puente,640340
+1333,La Quinta,640354
+1345,Larkspur,640438
+1346,Lathrop,640704
+1334,La Verne,640830
+1347,Lawndale,640886
+1348,Lemon Grove,641124
+1349,Lemoore,641152
+1350,Lincoln,641474
+1351,Lindsay,641712
+1352,Live Oak,641936
+1353,Livermore,641992
+1354,Livingston,642006
+1355,Lodi,642202
+1356,Loma Linda,642370
+1357,Lomita,642468
+1358,Lompoc,642524
+1359,Long Beach,643000
+1360,Loomis,643140
+1361,Los Alamitos,643224
+1362,Los Altos,643280
+1363,Los Altos Hills,643294
+1364,Los Angeles,644000
+1365,Los Banos,644028
+1366,Los Gatos,644112
+1367,Loyalton,644364
+1368,Lynwood,644574
+1379,McFarland,644826
+1369,Madera,645022
+1370,Malibu,645246
+1371,Mammoth Lakes,645358
+1372,Manhattan Beach,645400
+1373,Manteca,645484
+1374,Maricopa,645736
+1375,Marina,645778
+1376,Martinez,646114
+1377,Marysville,646170
+1378,Maywood,646492
+1380,Mendota,646828
+10255,Menifee,646842
+1381,Menlo Park,646870
+1382,Merced,646898
+1384,Millbrae,647486
+1383,Mill Valley,647710
+1385,Milpitas,647766
+1386,Mission Viejo,648256
+1387,Modesto,648354
+1388,Monrovia,648648
+1389,Montague,648690
+1390,Montclair,648788
+1392,Montebello,648816
+1393,Monterey,648872
+1394,Monterey Park,648914
+1391,Monte Sereno,648956
+1395,Moorpark,649138
+1396,Moraga,649187
+1397,Moreno Valley,649270
+1398,Morgan Hill,649278
+1399,Morro Bay,649362
+1400,Mountain View,649670
+1401,Mt. Shasta,649852
+1402,Murrieta,650076
+1403,Napa,650258
+1404,National City,650398
+1405,Needles,650734
+1406,Nevada City,650874
+1407,Newark,650916
+1408,Newman,651140
+1409,Newport Beach,651182
+1410,Norco,651560
+1411,Norwalk,652526
+1412,Novato,652582
+1413,Oakdale,652694
+1414,Oakland,653000
+1415,Oakley,653070
+1416,Oceanside,653322
+1417,Ojai,653476
+1418,Ontario,653896
+1419,Orange,653980
+1420,Orange Cove,654008
+1421,Orinda,654232
+1422,Orland,654274
+1423,Oroville,654386
+1424,Oxnard,654652
+1426,Pacifica,654806
+1425,Pacific Grove,654848
+1429,Palmdale,655156
+1427,Palm Desert,655184
+1428,Palm Springs,655254
+1430,Palo Alto,655282
+1431,Palos Verdes Estates,655380
+1432,Paradise,655520
+1433,Paramount,655618
+1434,Parlier,655856
+1435,Pasadena,656000
+1436,Patterson,656112
+1437,Perris,656700
+1438,Petaluma,656784
+1439,Pico Rivera,656924
+1440,Piedmont,656938
+1441,Pinole,657288
+1442,Pismo Beach,657414
+1443,Pittsburg,657456
+1444,Placentia,657526
+1445,Placerville,657540
+1446,Pleasant Hill,657764
+1447,Pleasanton,657792
+1448,Plymouth,657834
+1449,Point Arena,657876
+1450,Pomona,658072
+1452,Porterville,658240
+1451,Port Hueneme,658296
+1453,Portola,658352
+1454,Portola Valley,658380
+1455,Poway,658520
+8975,Rancho Cordova,659444
+1456,Rancho Cucamonga,659451
+1457,Rancho Mirage,659500
+1458,Rancho Palos Verdes,659514
+1459,Rancho Santa Margarita,659587
+1460,Red Bluff,659892
+1461,Redding,659920
+1462,Redlands,659962
+1463,Redondo Beach,660018
+1464,Redwood City,660102
+1465,Reedley,660242
+1466,Rialto,660466
+1467,Richmond,660620
+1468,Ridgecrest,660704
+1469,Rio Dell,660900
+1470,Rio Vista,660984
+1471,Ripon,661026
+1472,Riverbank,661068
+1473,Riverside,662000
+1474,Rocklin,662364
+1475,Rohnert Park,662546
+1476,Rolling Hills,662602
+1477,Rolling Hills Estates,662644
+1478,Rosemead,662896
+1479,Roseville,662938
+1480,Ross,662980
+1481,Sacramento,664000
+1542,St. Helena,664140
+1482,Salinas,664224
+1483,San Anselmo,664434
+1484,San Bernardino,665000
+1485,San Bruno,665028
+1486,San Buenaventura,665042
+1487,San Carlos,665070
+1488,San Clemente,665084
+1507,Sand City,665112
+1489,San Diego,666000
+1490,San Dimas,666070
+1491,San Fernando,666140
+1492,San Francisco,667000
+1493,San Gabriel,667042
+1508,Sanger,667056
+1494,San Jacinto,667112
+1495,San Joaquin,667126
+1496,San Jose,668000
+1497,San Juan Bautista,668014
+1498,San Juan Capistrano,668028
+1499,San Leandro,668084
+1500,San Luis Obispo,668154
+1501,San Marcos,668196
+1502,San Marino,668224
+1503,San Mateo,668252
+1504,San Pablo,668294
+1505,San Rafael,668364
+1506,San Ramon,668378
+1509,Santa Ana,669000
+1510,Santa Barbara,669070
+1511,Santa Clara,669084
+1512,Santa Clarita,669088
+1513,Santa Cruz,669112
+1514,Santa Fe Springs,669154
+1515,Santa Maria,669196
+1516,Santa Monica,670000
+1517,Santa Paula,670042
+1518,Santa Rosa,670098
+1519,Santee,670224
+1520,Saratoga,670280
+1521,Sausalito,670364
+1522,Scotts Valley,670588
+1523,Seal Beach,670686
+1524,Seaside,670742
+1525,Sebastopol,670770
+1526,Selma,670882
+1527,Shafter,671106
+1528,Shasta Lake,671225
+1529,Sierra Madre,671806
+1530,Signal Hill,671876
+1531,Simi Valley,672016
+1532,Solana Beach,672506
+1533,Soledad,672520
+1534,Solvang,672576
+1535,Sonoma,672646
+1536,Sonora,672674
+1537,South El Monte,672996
+1538,South Gate,673080
+1539,South Lake Tahoe,673108
+1540,South Pasadena,673220
+1541,South San Francisco,673262
+1543,Stanton,673962
+1544,Stockton,675000
+1545,Suisun City,675630
+1546,Sunnyvale,677000
+1547,Susanville,677364
+1548,Sutter Creek,677392
+1549,Taft,677574
+1550,Tehachapi,678092
+1551,Tehama,678106
+1552,Temecula,678120
+1553,Temple City,678148
+1554,Thousand Oaks,678582
+1555,Tiburon,678666
+1556,Torrance,680000
+1557,Tracy,680238
+1558,Trinidad,680448
+1559,Truckee,680588
+1560,Tulare,680644
+1561,Tulelake,680686
+1562,Turlock,680812
+1563,Tustin,680854
+1564,Twentynine Palms,680994
+1565,Ukiah,681134
+1566,Union City,681204
+1567,Upland,681344
+1568,Vacaville,681554
+1569,Vallejo,681666
+1570,Vernon,682422
+1571,Victorville,682590
+1572,Villa Park,682744
+1573,Visalia,682954
+1574,Vista,682996
+1575,Walnut,683332
+1576,Walnut Creek,683346
+1577,Wasco,683542
+1578,Waterford,683612
+1579,Watsonville,683668
+1580,Weed,683850
+1581,West Covina,684200
+1582,West Hollywood,684410
+1584,Westlake Village,684438
+1585,Westminster,684550
+1586,Westmorland,684606
+1583,West Sacramento,684816
+1587,Wheatland,685012
+1588,Whittier,685292
+9995,Wildomar,685446
+1589,Williams,685586
+1590,Willits,685600
+1591,Willows,685684
+1592,Windsor,685922
+1593,Winters,686034
+1594,Woodlake,686300
+1595,Woodland,686328
+1596,Woodside,686440
+1597,Yorba Linda,686832
+1598,Yountville,686930
+1599,Yreka,686944
+1600,Yuba City,686972
+1601,Yucaipa,687042
+1602,Yucca Valley,687056

@@ -1,0 +1,186 @@
+---
+title: "Merging Crime, Zillow, and Voter Data with Policing Data"
+author: "Angel Mendiola Ross"
+date: "5/9/2020"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_knit$set(root.dir = '/Users/angelmr/ps239t-final-project/')
+```
+
+## 1.0 Setup
+
+```{r}
+
+### Clear global environment
+rm(list=ls())
+
+library(pacman)
+pacman::p_unload(all)
+
+pacman::p_load(
+  tidyverse, #dplyr, readr, etc.
+  plyr, #for editing factor levels
+  magrittr, #%<>% operator
+  tidyr, #to transform from wide to long
+  ggthemes # for pretty charts
+)
+```
+
+## 1.1 Joining Crime and Zillow Data
+
+One of the alternative explanations for fluctations in police spending is the rational choice model, which posits that police spending is dependent on the crime rate. It could be either positive or negative: cities may devote more money to policing because they have a high crime rate or cities may have a low crime rate because they spend a lot of money on policing.
+
+Interestingly, many studies on policing find that the crime rate is not a significant predictor of police spending. I include the crime rate as a control variable in the analysis. Specifically, I draw on data from the FBI's Uniform Crime Reporting (UCR) Program for violent crime and property crime: <https://www.ucrdatatool.gov>.
+
+Beck and Goldstein (2018) advance the housing market capitalism perspective, suggesting that a rising dependence on housing market appreciation actually explains increases in police spending. To account for this explanation I also rely on Zillow housing market data: <https://www.zillow.com/research/data/>. Specifically, I use the Zillow Home Value Index (ZHVI) for all homes and for single-family homes as well as the Percent of Foreclosure Resales, which measures the percentage of home sales in a given month (I average over the course of the calendar year) in which the home was foreclosed upon within the previous year (e.g. sales of bank-owned homes after the bank took possession of a home following a foreclosure).
+
+
+```{r}
+# load crime and zillow data
+load("data/crime_data.RData")
+load("data/zillow.RData")
+
+# checking for the columns that I want to join on
+names(crime_data)
+names(zillow)
+
+# renaming regionname to city_name to join on year and city_name
+zillow %<>% dplyr::rename(city_name = RegionName)
+
+# checking year range
+unique(zillow$year)
+unique(crime_data$year)
+
+# dropping 2020 data because it is based on only part of the year
+zillow <- zillow %>% subset(year<2020)
+
+# joining zillow and crime data
+crime_housing <- full_join(x = crime_data,
+                          y = zillow,
+                          by = c("city_name", "year"))
+# note: I used a full join to get the full range of years across both datasets
+
+# checking the relationship between home prices and crime rates
+cor(crime_housing$prop_crime_rate, crime_housing$mean_ZHVI, use = "complete.obs") # -0.04
+cor(crime_housing$violent_crime_rate, crime_housing$mean_ZHVI, use = "complete.obs") # -0.42
+cor(crime_housing$prop_crime_rate, crime_housing$mean_foreclosure, use = "complete.obs") # -0.001
+
+# looking at how the housing prices change over time
+crime_housing %>%
+  subset(year>1999) %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise(n=n(),
+                   mean_housing_price=mean(mean_ZHVI, na.rm=T))
+
+# looking at how crime rates change over time
+crime_housing %>%
+  subset(year>1999) %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise(n=n(),
+                   mean_prop_crime=mean(prop_crime_rate, na.rm=T),
+                   mean_violent_crime = mean(violent_crime_rate, na.rm = T))
+
+```
+
+## 1.2 Visualizing Crime and Housing Data Over Time
+
+To get a sense of variation in my data, I created the following charts to show how one of the main independent and control variables change over time.
+
+# Zillow Home Value Index, 1995-2020
+``` {r, echo=F}
+ggplot(crime_housing, aes(x=year, y=mean_ZHVI)) +
+  geom_point() +
+  geom_smooth(color="orange") +
+  scale_y_log10(labels = scales::comma) + # getting rid of scientific notation
+  xlim(1995,2020) +
+  ggtitle("Zillow Home Value Index (ZHVI), California") +
+  labs(y="ZHVI (logged)", x = "Year") +
+  theme_economist() + 
+  scale_colour_economist()
+
+# Save plot 
+ggsave(filename="plots/ZHVI.pdf")
+
+```
+
+# Property Crime, 1995-2015
+``` {r, echo=F}
+ggplot(crime_housing, aes(x=year, y=prop_crime_rate)) +
+  geom_point() +
+  geom_smooth(color="orange") +
+  scale_y_log10(labels = scales::comma) + # getting rid of scientific notation
+  xlim(1995,2015) +
+  ggtitle("Property Crime Rate, California") +
+  labs(y="Property Crime Rate (logged)", x = "Year") +
+  theme_economist() + 
+  scale_colour_economist()
+
+# Save plot 
+ggsave(filename="plots/prop_crime.pdf")
+```
+
+# Violent Crime, 1995-2015
+``` {r, echo=F}
+ggplot(crime_housing, aes(x=year, y=violent_crime_rate)) +
+  geom_point() +
+  geom_smooth(color="orange") +
+  scale_y_log10(labels = scales::comma) + # getting rid of scientific notation
+  xlim(1995,2015) +
+  ggtitle("Violent Crime Rate, California") +
+  labs(y="Violent Crime Rate (logged)", x = "Year") +
+  theme_economist() + 
+  scale_colour_economist()
+
+# Save plot 
+ggsave(filename="plots/violent_crime.pdf")
+
+```
+
+## 1.3 Adding Voter Data
+
+Another potential explanation for differentiation between the core cities in California and suburban cities is partisanship. Although some research finds strong support for police among both Democrats and Republicans, others suggest that Republican-led cities devote more funding to police. Though not one of the independent variables of interest in my analysis, I include it as a control.
+
+The data come from the CA Secretary of State's Statewide Election Results: <https://www.sos.ca.gov/elections/prior-elections/statewide-election-results/>. I focus on presidential elections from 2000 to 2016. I cleaned data from the 5 elections and then merged with a file that has the GEOID for each place, which is a unique identifier provided by the Census.
+
+``` {r}
+# loading voter data
+load("data/vote_with_geo.RData")
+
+# renaming city variable to match crime and housing data
+vote_with_geo %<>% dplyr::rename(city_name = city)
+
+# joining with crime and housing data
+crime_zillow_vote <- left_join(x = crime_housing, 
+                               y= vote_with_geo, 
+                               by = c("year", "city_name"))
+
+```
+
+## 1.4 Now we are ready to merge with policing data
+
+Now that I have crime data, housing price data, and voter data, I am ready to merge with the full policing dataset in order to begin analysis.
+
+```{r}
+
+# load policing data
+load("data/policing_complete_lead.RData")
+
+# turning year into a factor variable
+dates <- unique(sort(crime_zillow_vote$year))
+crime_zillow_vote$year <- factor(crime_zillow_vote$year, labels = dates,  ordered = T)
+
+# now merging the policing data with crime
+data_no_census <- left_join(x = policing_complete_lead,
+                            y = crime_zillow_vote,
+                            by = c("year",
+                                   "city_name"))
+
+# saving full dataset (minus Census data)
+save(data_no_census,
+     file = "data/data_no_census.RData")
+
+```
+
+

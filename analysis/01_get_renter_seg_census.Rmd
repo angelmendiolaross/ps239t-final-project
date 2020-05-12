@@ -1,0 +1,200 @@
+---
+title: "Getting Data for Segregation Measures from the Census API"
+author: "Angel Mendiola Ross"
+date: "5/8/2020"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_knit$set(root.dir = '/Users/angelmr/ps239t-final-project/')
+```
+
+## 1.0 Setup
+
+```{r}
+
+### Clear global environment
+rm(list=ls())
+
+# Set working directory
+getwd()
+
+library(pacman)
+pacman::p_unload(all)
+
+pacman::p_load(
+  tidyverse, #dplyr, readr, etc.
+  plyr, #for editing factor levels
+  magrittr, #%<>% operator
+  readxl, #for excel workbooks
+  tidyr, #to transform from wide to long
+  ggplot2, #for plotting
+  tidycensus #census api
+  #purrr #for map function
+)
+
+#census api key
+census_api_key("1ce78664b294208f88f53c49746f378a51893b62")
+
+```
+
+## 1.1. Preparing Census API  call
+
+The purpose of this script is to call the data I need to create segregation measures, one of the main explanatory variables for my analysis. I am creating indices of dissimilarity between homeowners and renters as well as Black-white and Latino-white dissimilarity indices. 
+
+Following Trounstine (2018), in the future, I would also like to compute entropy scores and construct the Theil's H index.
+
+To start, I need to get the data necessary at the census tract level. I tried to run this analysis at the block group level because some of the cities in my sample are small and census tracts range from 2,500 to 8,000 people. As a result, some of the cities are comprised of only one tract. The block group (which ranges from 600 to 3,000 people) would be an interesting alterantive, but tidycensus is not working with block groups after 2009. So I am sticking with the tract level at this time.
+
+```{r}
+
+# the years I want data for
+years <- lst(2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018)
+
+# the main variables I need (household-level data for tenure and people-level data for race/ethnicity)
+tenure_tract <- c(
+  total_hhs = "B25003_001",
+  owner_hhs = "B25003_002",
+  renter_hhs = "B25003_003",
+  total_pop = "B03002_001",
+  nhw = "B03002_003",
+  nhb = "B03002_004",
+  nha = "B03002_006",
+  his = "B03002_012")
+
+```
+
+## 1.2 Calling the tract-level data
+
+``` {r}
+
+# this function generates a dataframe with the variables of interest by tract from 2009-2018
+tenure_by_tract <- map_dfr(
+  years,
+  ~ get_acs(
+    geography = "tract",
+    variables = tenure_tract,
+    state = "CA",
+    year = .x,
+    survey = "acs5"
+  ),
+  .id = "year"
+)
+
+# deleting moe from acs dataframe because I do not need it for the analysis I am conducting
+tenure_by_tract %<>%
+  select(-c(moe))
+
+tenure_by_tract %>% nrow() #rows in dataset=636496
+tenure_by_tract %>% distinct() %>% nrow() #unique rows in dataset=636496
+
+#using spread to transform the estiamte rows into columns
+tenure_by_tract <- tenure_by_tract %>%
+  spread(variable, estimate)
+
+```
+
+## 1.2 Now calling the place-level data
+
+I will need to join the tract-level data with the place-level data to be able to construct the dissimilarity indices by place.
+
+``` {r}
+
+# calling tenure data at the place-level
+tenure_by_place <- map_dfr(
+  years,
+  ~ get_acs(
+    geography = "place",
+    variables = tenure_tract,
+    state = "CA",
+    year = .x,
+    survey = "acs5"
+  ),
+  .id = "year"
+)
+
+# deleting moe from acs dataframe
+tenure_by_place %<>%
+  select(-c(moe))
+
+tenure_by_place %>% nrow() #rows in dataset=117992
+tenure_by_place %>% distinct() %>% nrow() #unique rows in dataset=117992
+
+#using spread to transform variable rows to columns
+tenure_by_place <- tenure_by_place %>%
+  spread(variable, estimate)
+
+```
+
+## 1.3 Now calling the metropolitan area data
+
+I need tract-level and place-level data for the dissimilarity indices, but I also need the metro area data to compute the entropy and Theil's H index (Trounstine 2018). So I'm getting that data for the metro area as well.
+
+```{r}
+
+# For some reason, when I include the state argument, I get the following API call error: unknown/unsupported geography hierarchy
+
+# But if I run it for the whole country, it works. So I will have to run it for the whole country and subset after
+tenure_by_metro <- map_dfr(
+  years,
+  ~ get_acs(
+    geography = "metropolitan statistical area/micropolitan statistical area",
+    variables = tenure_tract,
+    year = .x,
+    survey = "acs5"
+  ),
+  .id = "year"
+)
+
+# subsetting to CA only
+tenure_by_metro %<>%
+  subset(grepl(", CA", NAME))
+
+# checking MSAs
+unique(tenure_by_metro$NAME)
+# looks good
+
+tenure_by_metro %>% nrow() #rows in dataset=2752
+tenure_by_metro %>% distinct() %>% nrow() #unique rows in dataset=2752
+
+# adding a bool for whether the MSA is a metro area (true) or micro area (false)
+tenure_by_metro %<>%
+  mutate(metro = ifelse(grepl("Metro", NAME), TRUE, FALSE))
+
+# checking random sample
+tenure_by_metro %>%
+  sample_n(size = 10)
+
+# deleting moe from acs dataframe
+tenure_by_metro %<>%
+  select(-c(moe))
+
+#using spread to transform variable rows to columns
+tenure_by_metro <- tenure_by_metro %>%
+  spread(variable, estimate)
+
+```
+
+## 1.4 Rearranging columns and saving out data files
+
+``` {r}
+# checking columns
+names(tenure_by_metro)
+names(tenure_by_place)
+names(tenure_by_tract)
+
+# saving in correct order
+tenure_by_metro <- tenure_by_metro[c(1:4,11,9,10,12,8,7,6,5)]
+tenure_by_place <- tenure_by_place[c(1:3,10,8,9,11,7,6,5,4)]
+tenure_by_tract <- tenure_by_tract[c(1:3,10,8,9,11,7,6,5,4)]
+
+#saving raw tenure/race data for tract, place, and metro
+save(tenure_by_tract,
+     file="data/raw/tenure_by_tract_raw.RData")
+
+save(tenure_by_place,
+     file="data/raw/tenure_by_place_raw.RData")
+
+save(tenure_by_metro,
+     file="data/raw/tenure_by_metro_raw.RData")
+```

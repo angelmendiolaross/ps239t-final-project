@@ -1,0 +1,375 @@
+---
+title: "Computing Segregation Measures"
+author: "Angel Mendiola Ross"
+date: "5/8/2020"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_knit$set(root.dir = '/Users/angelmr/ps239t-final-project/')
+```
+
+## 1.0 Setup
+
+```{r}
+
+### Clear global environment
+rm(list=ls())
+
+# Set working directory
+getwd()
+
+library(pacman)
+pacman::p_unload(all)
+
+pacman::p_load(
+  tidyverse, #dplyr, readr, etc.
+  magrittr, #%<>% operator
+  tidyr, #to transform from wide to long
+  ggthemes # for pretty charts
+)
+
+```
+
+The goal of this script is to take the data generated from the Census API and compute a series of segregation measures, beginning with the index of dissimilarity for renters.
+
+## 1.1 Load files
+
+The first step is to load the files I generated from the Census API as well as the crosswalk from the LODES dataset.
+
+I downloaded the Census crosswalk from the following directory: <https://lehd.ces.census.gov/data/lodes/LODES7/ca/>. It includes information down to the block level. Because it is a pretty large file, I subsetted it down to California and the geographies needed. That file loads as xwalk_small.
+
+
+```{r}
+
+# Loading the necessary files 
+load("data/raw/tenure_by_tract_raw.RData")
+load("data/raw/tenure_by_place_raw.RData")
+load("data/raw/tenure_by_metro_raw.RData")
+load("xwalks/census_xwalk_small.RData")
+
+# the crosswalk still requires some wrangling
+names(xwalk_small)
+
+# dropping the block-level data
+xwalk_small <- xwalk_small[c(5,6,11,12,3,4,9,10)]
+
+xwalk_small %>% nrow() #rows in dataset=710145
+xwalk_small %>% distinct() %>% nrow() #unique rows in dataset=12500
+
+# deleting duplicate rows based on trct (which is the census tract)
+xwalk_small %<>% distinct(trct, .keep_all = TRUE)
+
+xwalk_small %>% distinct() %>% nrow() #unique rows in dataset=8059 and there are 8,057 tracts in CA so looks good
+
+```
+
+## 1.2 Joining Datasets
+
+``` {r}
+
+# prepping tract-level census data for join on trct in crosswalk
+tenure_by_tract %<>% dplyr::rename(trct = GEOID)
+
+# Starting tracts as the base dataset, but need to subset for ACS years 2010-2018 because the 2009 tract data is in the 2000 boundaries
+renter_seg <- tenure_by_tract %>% subset(year>2009)
+
+# Add columns with data from the tract-place crosswalk, matching on 'GEOID' variable 
+renter_seg <- left_join(x = renter_seg,
+                          y = xwalk_small,
+                          by = "trct")
+
+renter_seg %>% nrow() #rows in dataset=72513
+renter_seg %>% distinct() %>% nrow() #unique rows in dataset=72513
+
+# renaming geoid for place df "stplc" which is how it is in the crosswalk
+tenure_by_place %<>% dplyr::rename(stplc = GEOID)
+
+# Add columns with place-level variables to renter_seg, matching on 'year' & 'PLACE_GEOID' variable 
+renter_seg <- left_join(x = renter_seg,
+                          y = tenure_by_place,
+                          by = c('year', 'stplc'))
+
+
+renter_seg %>% nrow() #rows in dataset=72513
+renter_seg %>% distinct() %>% nrow() #unique rows in dataset=72513
+
+# renaming geoid in the metro data to "cbsa"
+tenure_by_metro %<>% dplyr::rename(cbsa = GEOID)
+
+# chaning cbsa to a character variable in the renter_seg dataframe
+renter_seg$cbsa <- as.character(renter_seg$cbsa)
+
+# Add columns with metro-level variables to renter_seg, matching on 'year' & 'PLACE_GEOID' variable 
+renter_seg <- left_join(x = renter_seg,
+                          y = tenure_by_metro,
+                          by = c('year', 'cbsa'))
+
+```
+
+
+## 1.3 Cleaning the Merged Renter Segregation Dataframe
+
+``` {r}
+
+# first step is viewing names and assigning variable names that make sense
+names(renter_seg)
+
+# starting with renaming renter variables
+renter_seg %<>% dplyr::rename(renters_tract = renter_hhs.x)
+renter_seg %<>% dplyr::rename(renters_place = renter_hhs.y)
+renter_seg %<>% dplyr::rename(renters_metro = renter_hhs)
+
+# now renaming homeowner variables
+renter_seg %<>% dplyr::rename(owners_tract = owner_hhs.x)
+renter_seg %<>% dplyr::rename(owners_place = owner_hhs.y)
+renter_seg %<>% dplyr::rename(owners_metro = owner_hhs)
+
+# renaming total households variables
+renter_seg %<>% dplyr::rename(hhs_tract = total_hhs.x)
+renter_seg %<>% dplyr::rename(hhs_place = total_hhs.y)
+renter_seg %<>% dplyr::rename(hhs_metro = total_hhs)
+
+# moving on to demographic variables
+renter_seg %<>% dplyr::rename(total_pop_tract = total_pop.x)
+renter_seg %<>% dplyr::rename(total_pop_place = total_pop.y)
+renter_seg %<>% dplyr::rename(total_pop_metro = total_pop)
+
+# non-hispanic white variable
+renter_seg %<>% dplyr::rename(nhw_tract = nhw.x)
+renter_seg %<>% dplyr::rename(nhw_place = nhw.y)
+renter_seg %<>% dplyr::rename(nhw_metro = nhw)
+
+# non-hispanic black variable
+renter_seg %<>% dplyr::rename(nhb_tract = nhb.x)
+renter_seg %<>% dplyr::rename(nhb_place = nhb.y)
+renter_seg %<>% dplyr::rename(nhb_metro = nhb)
+
+# non-hispanic asian variable
+renter_seg %<>% dplyr::rename(nha_tract = nha.x)
+renter_seg %<>% dplyr::rename(nha_place = nha.y)
+renter_seg %<>% dplyr::rename(nha_metro = nha)
+
+# and hispanic/latino variable
+renter_seg %<>% dplyr::rename(his_tract = his.x)
+renter_seg %<>% dplyr::rename(his_place = his.y)
+renter_seg %<>% dplyr::rename(his_metro = his)
+
+# now changing the "NAME" variables
+renter_seg %<>% dplyr::rename(tract_name = NAME.x)
+renter_seg %<>% dplyr::rename(place_name = NAME.y)
+renter_seg %<>% dplyr::rename(cbsa_name = NAME)
+
+# rearranging the columns so that the geo columns correspond to the data better
+renter_seg <- renter_seg[c(1:14,19:27,15:18,28:37)]
+
+# saving combined renter_seg data
+save(renter_seg,
+     file="data/renter_seg.RData")
+
+```
+
+
+## 1.4 Computing Renter Segregation (index of dissimilarity)
+
+Now that the dataset is cleanly labeled and ordered, I will begin computing the variables necessary for the index of dissimilarity for renters-homeowners.
+
+The formula for the index of dissimilarity that I use is here is based on Massey and Denton's (1988) "The Dimensions of Residential Segregation." It is also described in the Census Bureau's Measures of Segregation appendix: <https://www.census.gov/hhes/www/housing/resseg/pdf/app_b.pdf>. (see top right of page 122)
+
+``` {r}
+
+## NOTE: I use the dplyr:: prefix in the following chunk because group_by does not work without it due to plyr
+
+# computing the necessary renter proportions for tracts and for cities
+renter_seg %<>%
+  dplyr::mutate(prenter_tract = renters_tract/hhs_tract)
+
+renter_seg %<>%
+  dplyr::mutate(prenter_city = renters_place/hhs_place)
+
+# computing absolute difference of the two proportions
+renter_seg %<>%
+  dplyr::mutate(prenter_abs_diff = abs(prenter_tract - prenter_city))
+                
+# computing the numerator of the index of dissimilarity (based on city-level data)
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(diss_num_city = sum(hhs_tract*prenter_abs_diff, na.rm=TRUE)) %>% 
+  dplyr::ungroup()
+
+# assign NAs if there is no city-level data
+renter_seg %<>%
+  dplyr::mutate(diss_num_city = ifelse(is.na(prenter_city), NA, diss_num_city))
+
+# computing T
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(T_diss = sum(hhs_tract, na.rm=TRUE)) %>% 
+  dplyr::ungroup()
+
+# computing X
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(X_diss = sum(renters_tract, na.rm=TRUE)) %>% 
+  dplyr::ungroup()
+
+# computing P (ratio of X to T)
+renter_seg %<>%
+  dplyr::mutate(P_diss = X_diss / T_diss)
+
+# adding a variable for the number of tracts in each city
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(n_tracts = n())
+
+# checking to see if the large differences between the cities and tracts are due to cities with only a small number of tracts within in
+renter_seg %>%
+  dplyr::mutate(diff_P_city = P_diss - prenter_city) %>%
+  subset(diff_P_city>.30) %>%
+  dplyr::select("year","place_name","prenter_city","P_diss","diff_P_city","n_tracts")
+
+renter_seg %>%
+  dplyr::mutate(diff_P_city = P_diss - prenter_city) %>%
+  subset(diff_P_city<(-.30)) %>%
+  dplyr::select("year","place_name","prenter_city","P_diss","diff_P_city","n_tracts")
+# The only big issues here are the city of Industry and Rancho Santa Margarita
+
+# computing the dissimilarity denominator (based on aggregated tract-level data): (2PT)(1-P) 
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(diss_denom = 2*(P_diss*T_diss)*(1-P_diss)) %>% 
+  dplyr::ungroup()
+
+# computing the numerator of the index of dissimilarity (based on aggregated tract-level data): sum(hhs_tract)*abs(prenter_tract-P_diss)
+
+# first computing pi_abs_diff
+renter_seg %<>%
+  dplyr::mutate(pi_abs_diff = abs(prenter_tract - P_diss))
+
+# now the numerator
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(diss_num = sum(hhs_tract*pi_abs_diff, na.rm=TRUE)) %>% 
+  dplyr::ungroup()
+
+# computing the dissimilarity denominator (based on city-level data): (2PT)(1-P) 
+renter_seg %<>%
+  dplyr::group_by(place_name, year) %>%
+  dplyr::mutate(diss_denom_city = 2*(hhs_place*prenter_city)*(1-prenter_city)) %>% 
+  dplyr::ungroup()
+
+# now finally computing the renter-owner index of dissimilarity
+
+# based on city-level data
+renter_seg %<>%
+  dplyr::mutate(diss_index_city = diss_num_city / diss_denom_city)
+
+# based on aggregated tract-level data
+renter_seg %<>%
+  dplyr::mutate(diss_index = diss_num / diss_denom)
+
+```
+
+## 1.5 Transforming Data Frame into City-level Data
+
+Even though this is only for the 2010 to 2018 data and we would not expect much variation in such a short time frame for something like housing, I want to see if there is any variation.
+
+I have my data right now organized by census tract. But now that I computed the dissimilarity index, I want it organized by place (or city). So, first I will create a new dataframe with cities as the main unit of analysis and compute some summary statistics.
+
+``` {r}
+# stripping data frame down to just cities
+renter_seg_city <- distinct(renter_seg, year, stplc, .keep_all = TRUE)
+
+# looking at summary stats
+renter_seg_city %>%
+  subset(!is.na(cbsa) & !is.na(place_name)) %>%
+  select(n_tracts) %>%
+  summary(n_tracts)
+
+# assigning as NA the 27 values that are infinity
+renter_seg_city %<>%
+  dplyr::mutate(diss_index_city = ifelse(diss_index_city>10000, NA, diss_index_city))
+
+# now I can see the true mean for the dissimilarity index based on city-level variables
+renter_seg_city %>%
+  subset(!is.na(cbsa) & !is.na(place_name)) %>%
+  select(diss_index, diss_index_city, n_tracts) %>%
+  summary(diss_index)
+# there are some values that are very high on the city-level index that are skewing the mean
+
+# if I subset to cities/places with diss_index_city is less than 1, the means and medians are much closer
+renter_seg_city %>%
+  subset(!is.na(cbsa) & !is.na(place_name) & diss_index_city<1) %>%
+  select(diss_index, diss_index_city, n_tracts) %>%
+  summary(diss_index)
+
+```
+
+## 1.6 Plotting the Dissimilarity Index Over Time
+
+To get a feel for my data and prepare for plotting, I will transform the year variable (which was coerced into a character during an earlier join) into a numeric and compute yearly means.
+```{r}
+renter_seg_city$year <- as.numeric(as.character(renter_seg_city$year))
+
+# creating summary dfs to plot
+means <- renter_seg_city %>% 
+  group_by(year) %>%
+  summarise(diss_index = mean(diss_index, na.rm = T))
+
+means_city <- renter_seg_city %>% 
+  group_by(year) %>%
+  summarise(diss_index_city = mean(diss_index_city, na.rm = T))
+
+# checking yearly means
+means
+means_city
+
+```
+
+
+Now I can plot renter segregation based on both indices of dissimilairy. This one is using the aggregated tract-level measure (rather than actual city-level data):
+``` {r, echo=F}
+ggplot(renter_seg_city, aes(x=year, y=diss_index)) +
+  geom_point() +
+  geom_line(data = means, alpha = .8, size = 1, color = "orange") +
+  ggtitle("Renter Segregation, California") +
+  labs(y="Index of Dissimilarity (aggregated from tract-level measure)", x = "Year") +
+  theme_economist() + 
+  scale_colour_economist()
+
+# Save plot 
+ggsave(filename="plots/renter_segregation.pdf")
+```
+
+And this one is using the actually city-level data. Note that the index is only suppose to range from 0 to 1 but because this is based on the city-level data rather than tract aggregates, there are some cities where the index is greater than 1 because census tract boundaries are not cleanly divided by cities.
+``` {r, echo=F}
+ggplot(renter_seg_city, aes(x=year, y=diss_index_city)) +
+  geom_point() +
+  geom_line(data = means_city, alpha = .8, size = 1, color = "orange") +
+  ylim(0,3) +
+  ggtitle("Renter Segregation, California") +
+  labs(y="Index of Dissimilarity (from city-level data)", x = "Year") +
+  theme_economist() + 
+  scale_colour_economist() 
+
+# Save plot 
+ggsave(filename="plots/renter_segregation_city.pdf")
+```
+
+## 1.7 Saving Renter Segregation Data
+
+I don't need all variables in the dataframe for my main policing analysis, so here I am reducing the file down a bit and saving to an RData file.
+
+```{r}
+
+# checking names
+names(renter_seg_city)
+
+# selecting necessary variables
+renter_seg_city <- renter_seg_city[c(1,13:37,45,51,50)]
+
+# saving to data folder
+save(renter_seg_city,
+     file = "data/renter_seg_city.RData")
+
+```

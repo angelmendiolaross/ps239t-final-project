@@ -1,0 +1,332 @@
+---
+title: "Analyzing Data and Estimating Fixed Effects Regression"
+author: "Angel Mendiola Ross"
+date: "5/11/2020"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_knit$set(root.dir = '/Users/angelmr/ps239t-final-project/')
+```
+
+## 1.0 Setup
+
+```{r}
+
+### Clear global environment
+rm(list=ls())
+
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+
+# install.packages('zoo')
+library(pacman)
+pacman::p_unload(all)
+
+pacman::p_load(
+  tidyverse, #dplyr, readr, etc.
+  magrittr, #%<>% operator
+  ggthemes, #for pretty charts
+  lubridate, #for dates
+  plm, #panel data
+  sjPlot, #all
+  sjmisc, #for
+  sjlabelled #pretty tables
+)
+```
+
+## 1.1 Loading Data
+
+First, I will bring in my nearly completed dataset and assign it as panel data.
+
+Note: The only thing missing is the renter segregation measures that I have only for 2009 to 2018 (which I will add later on).
+
+```{r}
+
+load("data/all_data.RData")
+
+# dropping 1998 and 1999 data
+all_data <- all_data %>%
+  subset(year>1999)
+
+all_data %>% nrow()
+all_data %>% dplyr::distinct() %>% nrow()
+
+pdata <- unique(all_data, by = c("GEOID", "year"))
+pdata <- unique(pdata, by = c("city_name", "year"))
+unique(pdata)
+
+# still does not delete all duplicate rows
+# deleting "0NA" GEOIDs because they did not match appropriately
+pdata <- pdata[!(pdata$GEOID=="0NA"),]
+
+pdata %<>%
+  dplyr::mutate(id = paste(GEOID, as.character(year), sep=""))
+
+pdata$id[duplicated(pdata$id)]
+pdata <- pdata[!duplicated(pdata$id), ]
+pdata$id[duplicated(pdata$id)]
+
+# to prevent an error later on
+pdata %<>% ungroup()
+
+# setting up dataframe as panel data
+d_panel <- pdata.frame(pdata, 
+                       index=c("GEOID", "year"))
+
+```
+
+## 1.2 The first step is to run some basic models to check for significance.
+
+As a reminder, my main dependent variable is:
+* the log of inflation-adjusted police spending (leaded by one year)
+
+My main independent and control variables are:
+
+Racial/Immigrant Threat
+* percent non-Hispanic Black
+* percent Latino
+* percent immigrant
+
+Renter/Economic Threat
+* percent of renter households
+* poverty rate
+
+Interaction of Racial and Renter Threat
+* percent of renter households x percent non-Hispanic Black
+* percent of renter households x percent Latino
+
+Housing Market Capitalism Perspective
+* housing prices
+* foreclosure rate
+
+Controls
+* federal transfers
+* crime rate
+* total population and population density
+* vote share for Republican presidential candidate
+
+## 1.3 Bivariate Models
+
+Beginning with the racial/immigrant threat variables.
+```{r}
+d_panel %>% nrow()
+d_panel %>% distinct() %>% nrow()
+
+# Run the basic model
+model1 <- plm(log1p(police_infl_lead) ~ pnhb_interp, data=d_panel, model="within")
+summary(model1)
+# the relationship is not significant for percent Black
+
+model1 <- plm(log1p(police_infl_lead) ~ phis_interp, data=d_panel, model="within")
+summary(model1)
+# but it is for percent Latino
+
+model1 <- plm(log1p(police_infl_lead) ~ pimmig_interp, data=d_panel, model="within")
+summary(model1)
+# and percent immigrant
+
+```
+
+So interestingly, when running just the bivariate regressions, percent non-Hispanic Black is not significant, but percent Latino and percent immigrant are.
+
+Let's check the other independent variables: renter and economic threats
+
+```{r}
+
+model2 <- plm(log1p(police_infl_lead) ~ prenter_interp, data=d_panel, model="within")
+summary(model2)
+# percent of renters is signficant
+
+model2 <- plm(log1p(police_infl_lead) ~ ppov100_interp, data=d_panel, model="within")
+summary(model2)
+# the poverty rate is not signficant
+
+```
+
+Renter threat is significant but the poverty rate is not significant.
+
+Now checking the interaction of racial and economic threat
+
+```{r}
+
+model3 <- plm(log1p(police_infl_lead) ~ prenter_interp + pnhb_interp + prenter_interp*pnhb_interp, data=d_panel, model="within")
+summary(model3)
+
+```
+
+The percent renter retains significance and is actually slightly larger although the interaction term is not significant.
+
+Next up, the housing market capitalism explanations.
+
+```{r}
+model4 <- plm(log1p(police_infl_lead) ~ mean_ZHVI, data=d_panel, model="within")
+summary(model4)
+
+# housing prices are significant and the size of the coefficient is quite large
+
+model4 <- plm(log1p(police_infl_lead) ~ mean_foreclosure, data=d_panel, model="within")
+summary(model4)
+
+# foreclosure rates are not significant but they do not go back to 2000
+
+```
+
+So far, pretty strong evidence for the housing market capitalism explanations. Housing prices are significant.
+
+And finally, the control variables.
+
+```{r}
+model5 <- plm(log1p(police_infl_lead) ~ log1p(fed_transfers_infl_adj), data=d_panel, model="within")
+summary(model5)
+# federal transfers are not significant
+
+model5 <- plm(log1p(police_infl_lead) ~ log1p(prop_crime_rate), data=d_panel, model="within")
+summary(model5)
+model5 <- plm(log1p(police_infl_lead) ~ log1p(violent_crime_rate), data=d_panel, model="within")
+summary(model5)
+
+# property crime rate is positive and significant but the violent crime rate is negative and significant
+
+model5 <- plm(log1p(police_infl_lead) ~ log1p(total_pop_interp), data=d_panel, model="within")
+summary(model5)
+model5 <- plm(log1p(police_infl_lead) ~ log1p(pop_density_interp), data=d_panel, model="within")
+summary(model5)
+
+# both the total population and population density are also positive and significant
+
+model5 <- plm(log1p(police_infl_lead) ~ pvoteRepub, data=d_panel, model="within")
+summary(model5)
+
+# interestingly, the share of people who voted for the Republican presidential candidate is significant and negative
+
+```
+
+When it comes to bivariate analysis, the significant results are as follows:
+* percent Latino (positive)
+* percent immigrant (positive)
+* percent renter (positive)
+* housing prices (positive)
+* property crime rate (positive)
+* violent crime rate (negative)
+* total population (positive)
+* population density (positive)
+* percent of votes for the Republican presidential candidate (negative)
+
+
+## 1.4 Full Model
+
+Now to run the full model (minus the lagged dependent variable as an independent variable).
+
+```{r}
+
+# first with the presidential vote shares because the sample will be bigger
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + prenter_interp*pnhb_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp), data=d_panel, model="within")
+summary(model)
+
+```
+
+The percent Latino and percent immigrant are still significant and positive. Interestingly, the percent renter loses significance but the poverty rate becomes significant and negative. The property crime rate is positive and significant as is total population.
+
+```{r}
+# now with the presidential vote share
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + prenter_interp*pnhb_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + pvoteRepub + log1p(total_pop_interp) + log1p(pop_density_interp), data=d_panel, model="within")
+summary(model)
+```
+
+The percent Latino, percent immigrant, and the poverty rate retain significance. The property crime rate is still positive and significant. And even with the additional controls, the percent of voters who are Republican is significant and negative.
+
+```{r}
+# now with federal transfers
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + prenter_interp*pnhb_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + pvoteRepub + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj), data=d_panel, model="within")
+summary(model)
+```
+The percent immigrant and the poverty rate retain significant but all other variables lose significance at the 0.05 level.
+
+```{r}
+# and finally with also the lagged dependent variable
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + prenter_interp*pnhb_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + pvoteRepub + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+summary(model)
+# now only the property crime rate and the lagged dependent variable are significant
+
+# and also without the percent voting Republican
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + prenter_interp*pnhb_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+summary(model)
+# now percent immigrant retains significant as does the property crime rate and the lagged dependent variable
+
+```
+
+When I add in a lagged measure of the dependent variable (which is done following previous research), only the property crime rate and the lagged dependent variable are significant.
+
+When I run the model with the percent voting Republican during presidential election years, percent immigrant retains significant as does the property crime rate and the lagged dependent variable.
+
+
+## 1.4 Checking Some New Variables of Interest
+
+Given the significance of percent immigrant and the poverty rate in most of the models as well as the bifurcated socio-economic background of immigrants in the US, I thought perhaps the more important interaction was not percent Black x percent renter but percent immigrant x the poverty rate. So I tried the following model:
+
+```{r}
+# checking an interaction between percent immigrant and the poverty rate
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + pimmig_interp*ppov100_interp + prenter_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+summary(model)
+# the interaction between percent immigrant and the poverty rate is significant and negative
+
+# now to check for a quadratic relationship for percent Black
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + I(pnhb_interp^2) + phis_interp + I(phis_interp^2) + pimmig_interp + I(pimmig_interp^2) + ppov100_interp + pimmig_interp*ppov100_interp + prenter_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+summary(model)
+# quadratic term is not significant for percent Black or percent Latino but it is for percent immigrant
+
+# with percent of Republican voters
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + I(pnhb_interp^2) + phis_interp + I(phis_interp^2) + pimmig_interp + I(pimmig_interp^2) + ppov100_interp + pimmig_interp*ppov100_interp + prenter_interp + pvoteRepub + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+summary(model)
+# even with this variable, percent immigrant (and the quadratic term and the interaction with the poverty rate) retain significance.
+
+```
+
+Even though the results of the full sample (all cities with available data) are not how I hypothesized, I potentially made some interesting discoveries when it comes to immigrant threat. Even with all of the other independent variables and controls, the percent immigrant, the immigrant quadratic term, and the interaction between percent immigrant and the poverty rate retain significance.
+
+```{r}
+model_slim <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj), data=d_panel, model="within")
+
+model_lim <- plm(log1p(police_infl_lead) ~ pnhb_interp + phis_interp + pimmig_interp + ppov100_interp + prenter_interp + pvoteRepub + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+
+model <- plm(log1p(police_infl_lead) ~ pnhb_interp + I(pnhb_interp^2) + phis_interp + I(phis_interp^2) + pimmig_interp + I(pimmig_interp^2) + ppov100_interp + pimmig_interp*ppov100_interp + prenter_interp + pvoteRepub + log1p(violent_crime_rate) + log1p(prop_crime_rate) + log1p(total_pop_interp) + log1p(pop_density_interp) + log1p(fed_transfers_infl_adj) + log1p(police_infl_adj), data=d_panel, model="within")
+
+tab_model(model_slim, model_lim, model, pred.labels = c("Percent Black", "Percent Latino", "Percent Immigrant", "Poverty Rate", "Percent Renter", "Violent Crime Rate", "Property Crime Rate", "Total Population", "Population Density", "Federal Transfers", "Percent Republican", "Police Spending (t)", "Percent Black^2", "Percent Latino^2", "Percent Immigrant^2", "Percent Immigrant*Poverty Rate"), dv.labels = c("Model 1", "Model 2", "Model 3"), title = "Log of Inflation-Adjusted Policing Spending in t+1", show.ci = FALSE)
+
+```
+
+The main finding of this analysis is the existence of an *"immigrant threat"*, especially low-income immigrants as the interaction between percent immigrant and the poverty rate is significant.
+
+My next steps are adding renter segregation measures back to 2000 and seeing if that changes my results.
+
+```{r}
+# box plot of police spending
+ggplot(d_panel, aes(x = year, y = police_infl_lead)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  ggtitle("Inflation-Adjusted Policing Spending of California Cities") +
+  labs(y="Inflation-Adjusted Police Spending (logged)", x = "Year") +
+  theme_economist() + 
+  scale_colour_economist()
+ggsave(filename="plots/infl_adj_police_spending_boxplot.pdf")
+ggsave(filename="results/infl_adj_police_spending_boxplot.pdf")
+
+  
+# saving out my panel data frame
+save(d_panel,
+     file = "data/d_panel.RData")
+
+write_csv(d_panel,
+          "results/d_panel.csv")
+
+```
+
+
+
+
+
+
+
+
